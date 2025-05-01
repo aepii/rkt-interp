@@ -20,6 +20,7 @@
   (match e
     [(? integer?)                 e]
     [(? boolean?)                 e]
+    [(? number?)                  (only-int e)]
     
     [`(add1 ,e)                   (+ (only-int (interp e)) 1)]
     [`(sub1 ,e)                   (- (only-int (interp e)) 1)]
@@ -27,7 +28,7 @@
     [`(+ ,e1 ,e2)                 (+ (only-int (interp e1)) (only-int (interp e2)))]
     [`(- ,e1 ,e2)                 (- (only-int (interp e1)) (only-int (interp e2)))]
     [`(* ,e1 ,e2)                 (* (only-int (interp e1)) (only-int (interp e2)))]
-    [`(/ ,e1 ,e2)                 (interp-div (only-int (interp e1)) (only-int (interp e2)))]
+    [`(/ ,e1 ,e2)                 (interp-div e1 e2)]
 
     [`(if ,e1 ,e2 ,e3)            (interp-if e1 e2 e3)]
     [`(and ,e1 ,e2)               (interp-and e1 e2)]
@@ -35,8 +36,8 @@
     [`(truthy? ,e1)               (interp-truthy? e1)]
     [`(falsy? ,e1)                (interp-falsy? e1)]
 
-    [`(bool->num ,e1)             (interp-to-num (only-bool e1))]
-    [`(value->bool ,e1)           (interp-truthy? (only-int e1))]
+    [`(bool->int ,e1)             (interp-bool->int e1)]
+    [`(int->bool ,e1)             (interp-truthy? (only-int (interp e1)))]
     [_                            (raise-user-error 'interp "Invalid syntax: ~v" e)]))
 
 ;; Value -> Bool
@@ -57,17 +58,17 @@
 
 ;; Bool -> Value
 ;; Convert boolean to equivalent value
-(define (interp-to-num v)
-  (match v
+(define (interp-bool->int v)
+  (match (only-bool (interp v))
     [#f   0]
     [#t   1]))
 
 ;; Value -> Value
-;; Evaluate the quotient of two values
-(define (interp-div v1 v2)
-  (match v2
+;; Evaluate the quotient of two expressions
+(define (interp-div e1 e2)
+  (match (only-int (interp e2))
     [0            (raise-user-error 'interp "Divison by 0 not allowed")]
-    [_            (quotient v1 v2)]))
+    [v2           (quotient (only-int (interp e1)) v2)]))
 
 ;; If conditional
 (define (interp-if e1 e2 e3)
