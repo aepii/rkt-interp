@@ -32,6 +32,8 @@
 
     [`(if ,e1 ,e2 ,e3)            (interp-if e1 e2 e3)]
     [`(and ,e1 ,e2)               (interp-and e1 e2)]
+    [`(or ,e1 ,e2)                (interp-or e1 e2)]
+
 
     [`(truthy? ,e1)               (interp-truthy? e1)]
     [`(falsy? ,e1)                (interp-falsy? e1)]
@@ -84,6 +86,7 @@
 
 ;; Or conditional
 (define (interp-or e1 e2)
-  (match (interp e1)
-    [#f           #f]
-    [_            (interp e2)]))
+  (let ((e3 (interp e1)))
+    (if (interp-truthy? e3)
+        e3
+        (interp e2))))
